@@ -4,17 +4,7 @@ include_once '../php/includes/db.php';
 
 
 
-function get_company($sortOrder = 'ASC')
-{
-    $conn = connectToDB();
-    if ($conn) {
-        $stmt = $conn->prepare("SELECT * FROM company ORDER BY id $sortOrder");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } else {
-        return [];
-    }
-}
+
 function login($email, $password)
 {
     $conn = connectToDB();

@@ -11,7 +11,7 @@ if (!isset($_SESSION['id']) || $_SESSION['type'] != 'passenger') {
 
 // Fetch passenger data
 $userId = $_SESSION['id'];
-$stmt = $conn->prepare("SELECT name, email,account_number, photo, passport_img, tel FROM passenger WHERE id = ?");
+$stmt = $conn->prepare("SELECT name, email, account_number, photo, passport_img, tel FROM passenger WHERE id = ?");
 $stmt->execute([$userId]);
 $profile = $stmt->fetch();
 
@@ -19,7 +19,7 @@ $profile = $stmt->fetch();
 $stmt = $conn->prepare("SELECT flights.name, flights.source, flights.destination, flight_id 
                         FROM passengers_flights 
                         JOIN flights ON flight_id = flights.id 
-                        WHERE passenger_id = ? AND is_completed = 1");
+                        WHERE passenger_id = ? AND flights.end_datetime < CURDATE()");
 $stmt->execute([$userId]);
 $completedFlights = $stmt->fetchAll();
 
@@ -27,7 +27,7 @@ $completedFlights = $stmt->fetchAll();
 $stmt = $conn->prepare("SELECT flights.name, flights.source, flights.destination, flight_id 
                         FROM passengers_flights 
                         JOIN flights ON flight_id = flights.id 
-                        WHERE passenger_id = ? AND is_completed = 0");
+                        WHERE passenger_id = ? AND flights.end_datetime >= CURDATE()");
 $stmt->execute([$userId]);
 $currentFlights = $stmt->fetchAll();
 
@@ -36,9 +36,9 @@ $searchResults = [];
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['from'], $_GET['to'])) {
     $from = $_GET['from'];
     $to = $_GET['to'];
-    $stmt = $conn->prepare("SELECT id AS flight_id,name, company_id, source, destination 
+    $stmt = $conn->prepare("SELECT id AS flight_id, name, company_id, source, destination 
                             FROM flights 
-                            WHERE source LIKE ? AND destination LIKE ? AND is_completed = 0");
+                            WHERE source LIKE ? AND destination LIKE ? AND is_completed = 0 AND end_datetime >= CURDATE()");
     $stmt->execute(["%$from%", "%$to%"]);
     $searchResults = $stmt->fetchAll();
 }
@@ -50,6 +50,7 @@ if (isset($_GET['logout'])) {
     header("Location: login.php");
     exit();
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -61,180 +62,7 @@ if (isset($_GET['logout'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f7fa;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            position: relative;
-        }
-
-        body::before {
-            content: "";
-            position: fixed; /* Make the background stay fixed */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('../images/pexels-ahmedmuntasir-912050.jpg') no-repeat center center/cover; /* Ensure the image covers the viewport */
-            background-attachment: fixed; /* Keep the image fixed while scrolling */
-            opacity: 30%; /* Adjust the opacity as needed */
-            z-index: -1; /* Ensure the image is behind the content */
-        }
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #10465a;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar a {
-            color: white;
-            font-size: 16px;
-            text-decoration: none;
-            margin-left: 15px;
-            padding: 10px 15px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        .navbar a:hover {
-            background-color: rgba(255, 255, 255, 0.15);
-        }
-
-        .header {
-            background: #10465a;
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-            border-radius: 10px;
-            margin-top: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .header h1 {
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .profile-section {
-            margin-top: 30px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .profile-img {
-            border-radius: 50%;
-            width: 150px;
-            height: 150px;
-            object-fit: cover;
-        }
-
-        .profile-info h2 {
-            color: #10465a;
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        .profile-info p {
-            font-size: 16px;
-            color: #555;
-            margin: 5px 0;
-        }
-
-        .section-title {
-            color: #10465a;
-            font-size: 20px;
-            margin-top: 40px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .flights-table {
-            margin-top: 20px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .flights-table th {
-            background-color: #10465a;
-            color: white;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .flights-table td {
-            padding: 10px;
-            text-align: center;
-            color: #333;
-            background-color: #ffffff;
-        }
-
-        .flights-table tr:hover {
-            background-color: #f1f1f1;
-            cursor: pointer;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        .btn-success {
-            background-color: #10465a;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background-color: #0d3b4b;
-        }
-
-        .search-section {
-            margin-top: 40px;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .search-section input {
-            width: 100%;
-            padding: 10px;
-            font-size: 14px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            transition: border-color 0.3s;
-        }
-
-        .search-section input:focus {
-            border-color: #10465a;
-            outline: none;
-        }
-
-        .placeholder-text {
-            color: #888;
-            font-size: 16px;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-
-
-    </style>
+    <link rel="stylesheet" href="../css/passenger_home.css">
 </head>
 
 <body>

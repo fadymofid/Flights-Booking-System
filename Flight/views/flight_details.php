@@ -46,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $modalType = 'danger';  // Error modal
         }
     }
-
 }
+
 
 ?>
 <!DOCTYPE html>
@@ -58,117 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flight Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f7fa;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            position: relative;
-        }
+    <link rel="stylesheet" href="../css/flight_details.css">
 
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('../images/pexels-ahmedmuntasir-912050.jpg') no-repeat center center/cover;
-            background-attachment: fixed;
-            opacity: 0.3;
-            z-index: -1;
-        }
-
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #10465a;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar a {
-            color: white;
-            font-size: 16px;
-            text-decoration: none;
-            margin-left: 15px;
-            padding: 10px 15px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        .navbar a:hover {
-            background-color: rgba(255, 255, 255, 0.15);
-        }
-
-        .card {
-            margin-top: 20px;
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #10465a;
-        }
-
-        .card-text {
-            font-size: 1rem;
-            line-height: 1.6;
-        }
-
-        .btn {
-            font-size: 1rem;
-            font-weight: 500;
-            border-radius: 8px;
-            transition: transform 0.2s, background-color 0.3s;
-        }
-
-        .btn:hover {
-            transform: scale(1.05);
-        }
-
-        .btn-danger {
-            background-color: #e74c3c;
-            border-color: #e74c3c;
-        }
-
-        .btn-danger:hover {
-            background-color: #c0392b;
-            border-color: #c0392b;
-        }
-
-        .btn-primary {
-            background-color: #3498db;
-            border-color: #3498db;
-        }
-
-        .btn-primary:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
-        }
-
-        .modal-header {
-            background-color: #10465a;
-            color: white;
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-        }
-
-        .btn-close {
-            background-color: white;
-            color: #10465a;
-            border-radius: 50%;
-        }
-
-    </style>
 </head>
 
 <body>
@@ -195,7 +86,7 @@ if ($flight):
             <p class="card-text"><strong>End Time:</strong> <?= htmlspecialchars($flight['end_datetime']) ?></p>
 
             <a href="company_home.php" class="btn btn-secondary">Back to Home</a>
-            <?php if (!$flight['is_completed'] && !isset($flightStatusMessage)): ?>
+            <?php if (!$flight['is_completed'] ): ?>
                 <form method="POST" action="paymentSelection.php?id=<?php echo htmlspecialchars($flightId); ?>">
                     <input type="hidden" name="take_flight" value="1">
                     <button type="submit" class="btn btn-danger mt-3">Take It?</button>
@@ -209,6 +100,7 @@ if ($flight):
 </div>
 
 <?php endif; ?>
+<!-- Modal for Sending Message -->
 <!-- Modal for Sending Message -->
 <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -230,6 +122,7 @@ if ($flight):
         </div>
     </div>
 </div>
+
 
 <!-- Modal for Success or Error Message -->
 <?php if (isset($flightStatusMessage)): ?>
